@@ -208,8 +208,11 @@
 
 
 ## 插件坐标
-<dependency>
-    <groupId>com.d2rabbit</groupId>
-    <artifactId>ktorm-solon-plugin</artifactId>
-    <version>0.0.1</version>
-</dependency>
+
+    ```
+    <dependency>
+        <groupId>com.d2rabbit</groupId>
+        <artifactId>ktorm-solon-plugin</artifactId>
+        <version>0.0.1</version>
+    </dependency>
+    ```
