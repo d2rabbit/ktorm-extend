@@ -209,10 +209,12 @@
 
 ## 插件坐标
 
-    ```
+    ```text
+
     <dependency>
         <groupId>com.d2rabbit</groupId>
         <artifactId>ktorm-solon-plugin</artifactId>
         <version>0.0.1</version>
     </dependency>
+
     ```
