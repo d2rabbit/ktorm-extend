@@ -209,7 +209,7 @@
 
 ## 插件坐标
 
-    ```text
+
 
     <dependency>
         <groupId>com.d2rabbit</groupId>
@@ -217,4 +217,3 @@
         <version>0.0.1</version>
     </dependency>
 
-    ```
