@@ -1,8 +1,8 @@
-package org.noear.annotation
+package com.d2rabbit.annotation
 
 import org.ktorm.database.TransactionIsolation
-import org.noear.interceptor.KtormInterceptor
-import org.noear.interceptor.KtormTransactionType
+import com.d2rabbit.interceptor.KtormInterceptor
+import com.d2rabbit.interceptor.KtormTransactionType
 import org.noear.solon.annotation.Around
 import java.lang.annotation.Inherited
 
