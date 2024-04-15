@@ -1,8 +1,7 @@
-package org.noear.delegation
+package com.d2rabbit.solon
 
 import org.ktorm.database.Database
 import org.noear.solon.Solon
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 /**
@@ -10,7 +9,7 @@ import kotlin.reflect.KProperty
  * @author kelthas
  * @since 2024/03/17
  */
-open class KtormDelegate<T>(private val dateBaseName:String?=null) {
+open class SolonKtormDelegate<T>(private val dateBaseName:String?=null) {
     operator fun <T> getValue(thisRef: Any?, property: KProperty<*>): T {
        val dataBase =  if (!dateBaseName.isNullOrBlank()){
             Solon.context().getBean(dateBaseName.toString())

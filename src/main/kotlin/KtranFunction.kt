@@ -1,12 +1,13 @@
-package org.noear
+package com.d2rabbit
 
 import org.ktorm.database.Database
 import org.ktorm.database.TransactionIsolation
 import org.ktorm.database.TransactionManager
-import org.noear.KtranFunction.currentTransactionManager
-import org.noear.KtranFunction.newTransactionManager
-import org.noear.delegation.KtormDelegate
+import com.d2rabbit.KtranFunction.currentTransactionManager
+import com.d2rabbit.KtranFunction.newTransactionManager
+import com.d2rabbit.solon.SolonKtormDelegate
 import java.util.logging.Logger
+import kotlin.reflect.jvm.internal.impl.renderer.DescriptorRenderer.ValueParametersHandler.DEFAULT
 
 /**
  * ktrom 事务函数二次封装，方便调用
@@ -14,10 +15,20 @@ import java.util.logging.Logger
  * @since 2024/03/17
  */
 
- val logger: Logger = Logger.getLogger("ktorm-solon-plugin")
+val logger: Logger = Logger.getLogger("ktorm-solon-plugin")
 
-object KtranFunction {
+/**
+ * 新 事务类型等同于[KTran]的[KtormTransactionType.NEW_TRANSACTION_MANAGER]
+ */
+const val NEW = 0
 
+/**
+ * 当前 事务类型等同于[KTran]的[KtormTransactionType.DEFAULT_TRANSACTION_MANAGER]
+ */
+const val DEFAULT = 1
+
+
+internal object KtranFunction {
 
     /**
      * 当前事务 默认事务函数的封装  默认事务级别 [TransactionIsolation.READ_COMMITTED]
@@ -26,9 +37,13 @@ object KtranFunction {
      * @param func
      * @since 2024/03/17
      */
-    fun currentTransactionManager(database: Database,isolation : TransactionIsolation? =null ,func:()->Unit){
-         database.useTransaction(isolation){
-            func()
+    internal fun currentTransactionManager(
+        database: Database,
+        isolation: TransactionIsolation? = null,
+        func: (Database) -> Unit
+    ) {
+        database.useTransaction(isolation) {
+            func(database)
         }
     }
 
@@ -40,7 +55,11 @@ object KtranFunction {
      * @param func
      * @since 2024/03/17
      */
-    fun newTransactionManager(transactionManager: TransactionManager, isolation : TransactionIsolation? = TransactionIsolation.READ_COMMITTED, func:()->Unit)  {
+    internal fun newTransactionManager(
+        transactionManager: TransactionManager,
+        isolation: TransactionIsolation? = TransactionIsolation.READ_COMMITTED,
+        func: () -> Unit
+    ) {
         val transaction = transactionManager.newTransaction(isolation)
         runCatching {
             func()
@@ -58,33 +77,33 @@ object KtranFunction {
  *
  * 事务管理接口
  */
-sealed interface KtormTransactionManager{
-    fun transactionManager(dataBaseName:String,isolation: TransactionIsolation?, func: () -> Unit)
+sealed interface KtormTransactionManager {
+    fun transactionManager(dataBaseName: String, isolation: TransactionIsolation?, func: () -> Unit)
 }
-
 
 
 /**
  * 默认事务管理器
  */
-data object DefaultTransactionManager:KtormTransactionManager{
-    override fun transactionManager(dataBaseName:String,isolation: TransactionIsolation?, func: () -> Unit) {
+internal data object DefaultTransactionManager : KtormTransactionManager {
+    override fun transactionManager(dataBaseName: String, isolation: TransactionIsolation?, func: () -> Unit) {
         logger.info("DefaultTransactionManager execute")
-        val database:Database by KtormDelegate<Database>(dataBaseName)
-        currentTransactionManager(database,isolation){
+        val database: Database by SolonKtormDelegate<Database>(dataBaseName)
+        currentTransactionManager(database, isolation) {
             func()
         }
     }
 }
+
 /**
  * 新 事务管理器
  */
-data object NewTransactionManager:KtormTransactionManager{
-    override fun transactionManager(dataBaseName:String,isolation: TransactionIsolation?, func: () -> Unit) {
-        val database:Database by KtormDelegate<Database>(dataBaseName)
+internal data object NewTransactionManager : KtormTransactionManager {
+    override fun transactionManager(dataBaseName: String, isolation: TransactionIsolation?, func: () -> Unit) {
+        val database: Database by SolonKtormDelegate<Database>(dataBaseName)
         logger.info("NewTransactionManager execute")
         val newTransactionManager = database.transactionManager
-        newTransactionManager(newTransactionManager,isolation,func)
+        newTransactionManager(newTransactionManager, isolation, func)
     }
 
 }
@@ -97,9 +116,14 @@ data object NewTransactionManager:KtormTransactionManager{
  * @param isolation
  * @param func
  */
-fun defaultTransactionManager(database: Database,isolation: TransactionIsolation?=null, func: () -> Unit){
-    currentTransactionManager(database,isolation,func=func)
+internal fun defaultTransactionManager(
+    database: Database,
+    isolation: TransactionIsolation? = null,
+    func: (Database) -> Unit
+) {
+    currentTransactionManager(database, isolation, func = func)
 }
+
 /**
  * TODO
  * 创建新的事务函数的直接调用的封装函数
@@ -107,6 +131,24 @@ fun defaultTransactionManager(database: Database,isolation: TransactionIsolation
  * @param isolation
  * @param func
  */
-fun nextTransactionManager(database: Database, isolation: TransactionIsolation?=null, func: () -> Unit){
-    newTransactionManager(database.transactionManager,isolation,func)
+internal fun nextTransactionManager(transactionManager:TransactionManager, isolation: TransactionIsolation? = null, func: () -> Unit) {
+    newTransactionManager(transactionManager, isolation, func)
 }
+
+fun transaction(
+    database: Database,
+    transactionType: Int = DEFAULT,
+    isolation: TransactionIsolation? = null,
+    func: (Database) -> Unit
+) {
+
+    when (transactionType){
+        NEW->nextTransactionManager(database.transactionManager,isolation){
+            func(database)
+        }
+        DEFAULT-> currentTransactionManager(database,isolation,func)
+        else-> throw UnsupportedOperationException("The current transaction creation type is not supported")
+    }
+
+}
+

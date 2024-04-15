@@ -1,14 +1,13 @@
-package org.noear.interceptor
+package com.d2rabbit.interceptor
 
-import org.noear.DefaultTransactionManager
-import org.noear.KtormTransactionManager
-import org.noear.NewTransactionManager
-import org.noear.annotation.KTran
-import org.noear.logger
+import com.d2rabbit.DefaultTransactionManager
+import com.d2rabbit.KtormTransactionManager
+import com.d2rabbit.NewTransactionManager
+import com.d2rabbit.annotation.KTran
+import com.d2rabbit.logger
 import org.noear.solon.core.aspect.Interceptor
 import org.noear.solon.core.aspect.Invocation
 import java.util.logging.Level
-import java.util.logging.Logger
 
 
 /**
@@ -60,7 +59,7 @@ enum class KtormTransactionType(private val transactionManager: KtormTransaction
  *
  * @param ktormTransactionType
  */
-class KtormManagers(ktormTransactionType: KtormTransactionType) {
+internal class KtormManagers(ktormTransactionType: KtormTransactionType) {
 
     // 获取具体的事务管理
     private val transactionManager: KtormTransactionManager = ktormTransactionType.getTransactionManager()
