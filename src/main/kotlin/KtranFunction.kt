@@ -7,7 +7,11 @@ import com.d2rabbit.KtranFunction.currentTransactionManager
 import com.d2rabbit.KtranFunction.newTransactionManager
 import com.d2rabbit.solon.SolonKtormDelegate
 import java.util.logging.Logger
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.reflect.jvm.internal.impl.renderer.DescriptorRenderer.ValueParametersHandler.DEFAULT
+import kotlin.reflect.jvm.reflect
 
 /**
  * ktrom 事务函数二次封装，方便调用
@@ -37,12 +41,12 @@ internal object KtranFunction {
      * @param func
      * @since 2024/03/17
      */
-    internal fun currentTransactionManager(
+    internal fun <R> currentTransactionManager(
         database: Database,
         isolation: TransactionIsolation? = null,
-        func: (Database) -> Unit
-    ) {
-        database.useTransaction(isolation) {
+        func: (Database) -> R
+    ): R {
+        return database.useTransaction(isolation) {
             func(database)
         }
     }
@@ -55,13 +59,13 @@ internal object KtranFunction {
      * @param func
      * @since 2024/03/17
      */
-    internal fun newTransactionManager(
+    internal fun <R> newTransactionManager(
         transactionManager: TransactionManager,
         isolation: TransactionIsolation? = TransactionIsolation.READ_COMMITTED,
-        func: () -> Unit
-    ) {
+        func: () -> R
+    ): R {
         val transaction = transactionManager.newTransaction(isolation)
-        runCatching {
+        return runCatching {
             func()
         }.onSuccess {
             transaction.commit()
@@ -88,7 +92,7 @@ sealed interface KtormTransactionManager {
 internal data object DefaultTransactionManager : KtormTransactionManager {
     override fun transactionManager(dataBaseName: String, isolation: TransactionIsolation?, func: () -> Unit) {
         logger.info("DefaultTransactionManager execute")
-        val database: Database by SolonKtormDelegate<Database>(dataBaseName)
+        val database: Database by SolonKtormDelegate(dataBaseName)
         currentTransactionManager(database, isolation) {
             func()
         }
@@ -100,7 +104,7 @@ internal data object DefaultTransactionManager : KtormTransactionManager {
  */
 internal data object NewTransactionManager : KtormTransactionManager {
     override fun transactionManager(dataBaseName: String, isolation: TransactionIsolation?, func: () -> Unit) {
-        val database: Database by SolonKtormDelegate<Database>(dataBaseName)
+        val database: Database by SolonKtormDelegate(dataBaseName)
         logger.info("NewTransactionManager execute")
         val newTransactionManager = database.transactionManager
         newTransactionManager(newTransactionManager, isolation, func)
@@ -131,24 +135,31 @@ internal fun defaultTransactionManager(
  * @param isolation
  * @param func
  */
-internal fun nextTransactionManager(transactionManager:TransactionManager, isolation: TransactionIsolation? = null, func: () -> Unit) {
-    newTransactionManager(transactionManager, isolation, func)
+internal fun <R> nextTransactionManager(
+    transactionManager: TransactionManager,
+    isolation: TransactionIsolation? = null,
+    func: () -> R
+): R {
+    return newTransactionManager(transactionManager, isolation, func)
 }
 
-fun transaction(
+@OptIn(ExperimentalContracts::class)
+fun <R> transaction(
     database: Database,
     transactionType: Int = DEFAULT,
     isolation: TransactionIsolation? = null,
-    func: (Database) -> Unit
-) {
-
-    when (transactionType){
-        NEW->nextTransactionManager(database.transactionManager,isolation){
+    func: (Database) -> R
+): R {
+    contract {
+        callsInPlace(func, InvocationKind.EXACTLY_ONCE)
+    }
+    return when (transactionType) {
+        NEW -> nextTransactionManager(database.transactionManager, isolation) {
             func(database)
         }
-        DEFAULT-> currentTransactionManager(database,isolation,func)
-        else-> throw UnsupportedOperationException("The current transaction creation type is not supported")
+
+        DEFAULT -> currentTransactionManager(database, isolation, func)
+        else -> throw UnsupportedOperationException("The current transaction creation type is not supported")
     }
 
 }
-

@@ -13,9 +13,9 @@
     <artifactId>ktorm-extend</artifactId>
     <version>0.0.2-alpha</version>
 
-    <name>ktorm-solon-plugin</name>
+    <name>ktorm-extend</name>
     <description>ktorm 扩展化组件</description>
-    <url>https://gitee.com/d2Rabbit/ktorm-for-solon-plugin</url>
+    <url>https://gitee.com/d2Rabbit/ktorm-extend</url>
     <licenses>
         <license>
             <name>MIT License</name>
@@ -33,7 +33,7 @@
     </developers>
 
     <scm>
-        <connection>scm:git:https://gitee.com/d2Rabbit/ktorm-for-solon-plugin.git</connection>
+        <connection>scm:git:https://gitee.com/d2Rabbit/ktorm-extend.git</connection>
         <developerConnection>scm:git:https://gitee.com/d2Rabbit/ktorm-for-solon-plugin.git</developerConnection>
         <url>https://gitee.com/d2Rabbit/ktorm-for-solon-plugin</url>
     </scm>

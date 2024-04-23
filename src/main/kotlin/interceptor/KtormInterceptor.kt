@@ -3,7 +3,7 @@ package com.d2rabbit.interceptor
 import com.d2rabbit.DefaultTransactionManager
 import com.d2rabbit.KtormTransactionManager
 import com.d2rabbit.NewTransactionManager
-import com.d2rabbit.annotation.KTran
+import com.d2rabbit.annotation.SolonTransaction
 import com.d2rabbit.logger
 import org.noear.solon.core.aspect.Interceptor
 import org.noear.solon.core.aspect.Invocation
@@ -11,13 +11,13 @@ import java.util.logging.Level
 
 
 /**
- * [KTran]的埋点拦截器
+ * [SolonTransaction]的埋点拦截器
  * @author kelthas
  * @since 2024/03/17
  */
 open class KtormInterceptor : Interceptor {
     /**
-     * 定义新的拦截器，以实现[KTran]的埋点获取
+     * 定义新的拦截器，以实现[SolonTransaction]的埋点获取
      *
      * @param inv
      */
@@ -27,12 +27,12 @@ open class KtormInterceptor : Interceptor {
         return ktormManagers.ktormTransactionManager(kTran) { inv.invoke() }
     }
 
-    private fun kTran(inv: Invocation): KTran = runCatching {
-        inv.method().getAnnotation(KTran::class.java)?:inv.targetClz.getAnnotation(KTran::class.java)
+    private fun kTran(inv: Invocation): SolonTransaction = runCatching {
+        inv.method().getAnnotation(SolonTransaction::class.java)?:inv.targetClz.getAnnotation(SolonTransaction::class.java)
     }.onFailure {
         logger.severe("kTran exception $it")
         it.printStackTrace()
-    }.getOrDefault(KTran())
+    }.getOrDefault(SolonTransaction())
 
 }
 
@@ -53,7 +53,7 @@ enum class KtormTransactionType(private val transactionManager: KtormTransaction
 
 /**
  * TODO
- *  根据每个[KTran]中的事务管理器类型，创建事务管理，并完成事务管理
+ *  根据每个[SolonTransaction]中的事务管理器类型，创建事务管理，并完成事务管理
  * @constructor
  * TODO
  *
@@ -64,9 +64,9 @@ internal class KtormManagers(ktormTransactionType: KtormTransactionType) {
     // 获取具体的事务管理
     private val transactionManager: KtormTransactionManager = ktormTransactionType.getTransactionManager()
 
-    fun ktormTransactionManager(kTran: KTran, func: () -> Any?): Any? = kotlin.runCatching{
+    fun ktormTransactionManager(ktormTransaction: SolonTransaction, func: () -> Any?): Any? = kotlin.runCatching{
         var result: Any? = null;
-        transactionManager.transactionManager(kTran.dataBaseName, kTran.isolation) {
+        transactionManager.transactionManager(ktormTransaction.dataBaseName, ktormTransaction.isolation) {
             result = func()
         }
 
