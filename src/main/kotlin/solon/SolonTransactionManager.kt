@@ -3,6 +3,7 @@ package com.d2rabbit.solon
 import org.ktorm.database.*
 import org.ktorm.logging.Logger
 import org.ktorm.logging.detectLoggerImplementation
+import org.noear.solon.Solon
 import org.noear.solon.data.tran.TranUtils
 import org.noear.solon.exception.SolonException
 import java.sql.Connection
@@ -16,10 +17,10 @@ import javax.sql.DataSource
  */
 
 internal class SolonTransactionManager(private val dataSource: DataSource) : TransactionManager {
-    override val currentTransaction: Transaction
-        get() = TODO("Not yet implemented")
-    override val defaultIsolation: TransactionIsolation
-        get() = TODO("Not yet implemented")
+    override val currentTransaction: Transaction?
+        get() = null
+    override val defaultIsolation: TransactionIsolation?
+        get() = null
 
     /**
      * TODO
@@ -27,6 +28,7 @@ internal class SolonTransactionManager(private val dataSource: DataSource) : Tra
      * @return
      */
     override fun newConnection(): Connection {
+
         return TranUtils.getConnectionProxy(dataSource)
     }
 
@@ -53,6 +55,8 @@ public fun Database.Companion.connectWithSolonSupport(
     alwaysQuoteIdentifiers: Boolean = false,
     generateSqlInUpperCase: Boolean? = null
 ): Database {
+    val version = Solon.version()
+    if (version < "2.7.4") throw UnsupportedOperationException("Solon version must be 2.7.4+,please use default connection.")
     return Database(
         transactionManager = SolonTransactionManager(dataSource),
         dialect = dialect,

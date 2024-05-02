@@ -131,8 +131,8 @@ internal fun defaultTransactionManager(
 /**
  * TODO
  * 创建新的事务函数的直接调用的封装函数
- * @param database
- * @param isolation
+ * @param database DateBase对象
+ * @param isolation 事务类型
  * @param func
  */
 internal fun <R> nextTransactionManager(
@@ -143,6 +143,15 @@ internal fun <R> nextTransactionManager(
     return newTransactionManager(transactionManager, isolation, func)
 }
 
+/**
+ * TODO
+ *
+ * @param database  DateBase对象
+ * @param transactionType 事务函数类型[DEFAULT] 和[NEW]
+ * @param isolation  事务隔离级别[TransactionIsolation]
+ * @param func 函数体
+ * @return
+ */
 @OptIn(ExperimentalContracts::class)
 fun <R> transaction(
     database: Database,
