@@ -126,3 +126,22 @@ fun <R> transaction(
     }
 
 ```
+# 4.坐标
+
+* maven 
+```xml
+<dependency>
+    <groupId>com.d2rabbit</groupId>
+    <artifactId>ktorm-extend</artifactId>
+    <version>0.0.2-alpha</version>
+</dependency>
+```
+* gradle(kotlin)
+```kotlin
+implementation("com.d2rabbit:ktorm-extend:0.0.2-alpha")
+```
+* gradle
+```groovy
+implementation group: 'com.d2rabbit', name: 'ktorm-extend', version: '0.0.2-alpha'
+implementation 'com.d2rabbit:ktorm-extend:0.0.2-alpha'
+```
